@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 const App = () => {
@@ -9,38 +9,58 @@ const App = () => {
   const [oldAccountNumberPosition, setOldAccountNumberPosition] = useState('');
   const [newAccountNumberPosition, setNewAccountNumberPosition] = useState('');
   const [accountNumberPosition, setAccountNumberPosition] = useState('');
-  const [additionalPosition, setAdditionalPosition] = useState('');
+  const [lineSubstringStart, setlineSubstringStart] = useState('');
+  const [lineSubstringEnd, setlineSubstringEnd] = useState('');
   const [output, setOutput] = useState('');
+  const [url, setUrl] = useState("");
+
+
 
   const onBniFileChange = (e) => {
     setBniInputFile(e.target.files[0]);
   };
 
+  const onMandiriFileChange = (e) => {
+    setMandiriInputFile(e.target.files[0]);
+  }
+
   const onStaticDataFileChange = (e) => {
     setStaticDataInputFile(e.target.files[0])
   };
 
+
+  useEffect(() => {
+    if(template === "bni") {
+      setUrl(`http://localhost:8081/api/bni/process?oldAccountNumberPosition=${oldAccountNumberPosition}&newAccountNumberPosition=${newAccountNumberPosition}&accountNumberPosition=${accountNumberPosition}`)
+    } else if(template === "mandiri") {
+      setUrl(`http://localhost:8081/api/mandiri/process?oldAccountNumberPosition=${oldAccountNumberPosition}&newAccountNumberPosition=${newAccountNumberPosition}&lineSubstringStart=${lineSubstringStart}&lineSubstringEnd=${lineSubstringEnd}`)
+    }
+  }, [oldAccountNumberPosition, newAccountNumberPosition, accountNumberPosition, lineSubstringStart, lineSubstringEnd, template])
   
+
+ 
+
 
   const handleSubmit = () => {
     // Handle form submission based on template and input data
     const formData = new FormData();
-    formData.append('bniFile', bniInput);
-    formData.append('staticDataFile', staticDataInput);
 
-    const inputData = {
-      oldAccountNumberPosition,
-      newAccountNumberPosition,
-      additionalPosition,
-    };
+    // handleUrlChoose()
+    const handleFormInput = () => {
+      if (template === "bni") {
+        formData.append('bniFile', bniInput);
+        formData.append('staticDataFile', staticDataInput);
+      } else if (template === "mandiri") {
+        formData.append('mandiriFile', mandiriInput);
+        formData.append('staticDataFile', staticDataInput);
+      }
+    }
 
-    console.log('Template:', template);
-    console.log('Input Data:', inputData);
-    
+    handleFormInput()
+
 
     // Make an API request using axios
-    // Replace 'API_ENDPOINT' with your actual API endpoint
-    axios.post(`http://localhost:8081/api/bni/process?oldAccountNumberPosition=${oldAccountNumberPosition}&newAccountNumberPosition=${newAccountNumberPosition}&accountNumberPosition=${accountNumberPosition}`, formData, { params: inputData })
+    axios.post(url, formData)
       .then(response => {
         // Handle response from the API
         console.log('API Response:', response.data);
@@ -51,9 +71,10 @@ const App = () => {
         // Handle errors
         console.error('API Error:', error);
       });
-      
+
   };
 
+  console.log(url)
   return (
     <div className="App">
       <h1>Payment App</h1>
@@ -65,54 +86,102 @@ const App = () => {
           <option value="mandiri">Mandiri Template</option>
         </select>
       </div>
-      <div>
-        <label>Payment File:</label>
-        <input
-          type="file"
-          accept={template === 'bni' ? '.csv' : '.txt'}
-          onChange={onBniFileChange}
-        />
-      </div>
-      <div>
-        <label>Static Data File:</label>
-        <input
-          type="file"
-          accept=".txt"
-          onChange={onStaticDataFileChange}
-        />
-      </div>
-      <div>
-        <label>Old Account Number Position:</label>
-        <input
-          type="number"
-          value={oldAccountNumberPosition}
-          onChange={(e) => setOldAccountNumberPosition(Number(e.target.value))}
-        />
-      </div>
-      <div>
-        <label>New Account Number Position:</label>
-        <input
-          type="number"
-          value={newAccountNumberPosition}
-          onChange={(e) => setNewAccountNumberPosition(Number(e.target.value))}
-        />
-      </div>
-      <div>
-        <label>Account Number Position:</label>
-        <input
-          type="number"
-          value={accountNumberPosition}
-          onChange={(e) => setAccountNumberPosition(Number(e.target.value))}
-        />
-      </div>
+      {template === "bni" && (
+        <div>
+          <div>
+            <label>Payment File:</label>
+            <input
+              type="file"
+              accept={template === 'bni' && '.csv'}
+              onChange={onBniFileChange}
+            />
+          </div>
+          <div>
+            <label>Static Data File:</label>
+            <input
+              type="file"
+              accept=".txt"
+              onChange={onStaticDataFileChange}
+            />
+          </div>
+          <div>
+            <label>Old Account Number Position:</label>
+            <input
+              type="number"
+              value={oldAccountNumberPosition}
+              onChange={(e) => setOldAccountNumberPosition(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label>New Account Number Position:</label>
+            <input
+              type="number"
+              value={newAccountNumberPosition}
+              onChange={(e) => setNewAccountNumberPosition(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label>Account Number Position:</label>
+            <input
+              type="number"
+              value={accountNumberPosition}
+              onChange={(e) => setAccountNumberPosition(Number(e.target.value))}
+            />
+          </div>
+        </div>
+      )}
+
       {template === 'mandiri' && (
         <div>
-          <label>Line Substring Start:</label>
-          <input
-            type="number"
-            value={additionalPosition}
-            onChange={(e) => setAdditionalPosition(Number(e.target.value))}
-          />
+          <div>
+            <label>Payment File:</label>
+            <input
+              type="file"
+              accept={template === 'mandiri' && '.txt'}
+              onChange={onMandiriFileChange}
+            />
+          </div>
+          <div>
+            <label>Static Data File:</label>
+            <input
+              type="file"
+              accept=".txt"
+              onChange={onStaticDataFileChange}
+            />
+          </div>
+          <div>
+            <label>Old Account Number Position:</label>
+            <input
+              type="number"
+              value={oldAccountNumberPosition}
+              onChange={(e) => setOldAccountNumberPosition(Number(e.target.value))}
+            />
+          </div>
+
+          <div>
+            <label>New Account Number Position:</label>
+            <input
+              type="number"
+              value={newAccountNumberPosition}
+              onChange={(e) => setNewAccountNumberPosition(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label>Line Substring start Position:</label>
+            <input
+              type="number"
+              value={lineSubstringStart}
+              onChange={(e) => setlineSubstringStart(Number(e.target.value))}
+            />
+          </div>
+          <div>
+            <label>Line Substring end Position:</label>
+            <input
+              type="number"
+              value={lineSubstringEnd}
+              onChange={(e) => setlineSubstringEnd(Number(e.target.value))}
+            />
+          </div>
         </div>
       )}
       <button onClick={handleSubmit}>Submit</button>
